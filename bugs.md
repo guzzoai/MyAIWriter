@@ -15,10 +15,16 @@
 ✅ Raw html button shows raw md text
 - Fixed by improving the view mode cycling logic in BlogPreview component
 
-# Current Issues
-- None
+✅ The html preview uses the MarkDown code to preview and not html formated with <h1> tags
+- Fixed by implementing a markdownToHtml conversion function and using it to properly format content in HtmlPreview and PrintView components
 
-# Feature Requests
+# Current Issues
+- No known issues
+
+# Future Enhancements
 - Add more statistics on the dashboard
 - Improve HTML formatting options
-- Add export functionality
+- Add export functionality to various formats
+- Add collaborative editing features
+
+

@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Blog } from '../types';
 import { formatDate } from '../utils/dateUtils';
+import { htmlToMarkdown, markdownToHtml } from '../utils/formatUtils';
 
 interface PrintViewProps {
   blog: Blog;
@@ -9,6 +10,15 @@ interface PrintViewProps {
 
 const PrintView: React.FC<PrintViewProps> = ({ blog, onClose }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const [formattedContent, setFormattedContent] = useState('');
+  
+  useEffect(() => {
+    if (blog) {
+      // Convert content to markdown then to properly formatted HTML
+      const md = htmlToMarkdown(blog.content);
+      setFormattedContent(markdownToHtml(md));
+    }
+  }, [blog]);
   
   const handlePrint = () => {
     const printContent = document.createElement('div');
@@ -117,7 +127,7 @@ const PrintView: React.FC<PrintViewProps> = ({ blog, onClose }) => {
           <p><strong>Type:</strong> ${blog.articleType} | <strong>Tone:</strong> ${blog.tone}</p>
           <p><strong>Word Count:</strong> ${blog.wordCount} words</p>
         </div>
-        ${blog.content}
+        ${formattedContent}
       </div>
     `;
     
@@ -172,7 +182,7 @@ const PrintView: React.FC<PrintViewProps> = ({ blog, onClose }) => {
             </div>
             <div 
               className="prose prose-lg max-w-none prose-headings:text-blue-600 prose-a:text-blue-600" 
-              dangerouslySetInnerHTML={{ __html: blog.content }}
+              dangerouslySetInnerHTML={{ __html: formattedContent }}
             />
           </div>
         </div>

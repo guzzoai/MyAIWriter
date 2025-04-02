@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Blog } from '../types';
 import { formatDate } from '../utils/dateUtils';
-import { htmlToMarkdown, copyToClipboard } from '../utils/formatUtils';
+import { htmlToMarkdown, markdownToHtml, copyToClipboard } from '../utils/formatUtils';
 import HtmlPreview from './HtmlPreview';
 import MarkdownPreview from './MarkdownPreview';
 import PrintView from './PrintView';
@@ -24,6 +24,7 @@ const BlogPreview = ({ blog, blogs, onSave, onDelete, onSelect, isEditing: initi
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showPrintView, setShowPrintView] = useState(false);
   const [markdownContent, setMarkdownContent] = useState('');
+  const [htmlContent, setHtmlContent] = useState('');
   const [copySuccess, setCopySuccess] = useState('');
   
   useEffect(() => {
@@ -53,11 +54,17 @@ const BlogPreview = ({ blog, blogs, onSave, onDelete, onSelect, isEditing: initi
     return () => observer.disconnect();
   }, []);
   
+  // Process content when blog changes
   useEffect(() => {
-    if (blog && (viewMode === 'raw-md' || viewMode === 'formatted')) {
-      setMarkdownContent(htmlToMarkdown(blog.content));
+    if (blog) {
+      // First, convert content to markdown
+      const md = htmlToMarkdown(blog.content);
+      setMarkdownContent(md);
+      
+      // Then convert markdown to properly formatted HTML
+      setHtmlContent(markdownToHtml(md));
     }
-  }, [blog, viewMode]);
+  }, [blog]);
 
   const handleEdit = () => {
     if (blog) {
@@ -233,7 +240,7 @@ const BlogPreview = ({ blog, blogs, onSave, onDelete, onSelect, isEditing: initi
               </div>
             </div>
           ) : viewMode === 'formatted' ? (
-            <HtmlPreview content={blog.content} isDarkMode={isDarkMode} />
+            <HtmlPreview content={htmlContent} isDarkMode={isDarkMode} />
           ) : viewMode === 'raw-md' ? (
             <MarkdownPreview content={markdownContent} isDarkMode={isDarkMode} />
           ) : (

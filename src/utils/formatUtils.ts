@@ -86,6 +86,76 @@ export function htmlToMarkdown(htmlContent: string): string {
 }
 
 /**
+ * Converts Markdown content to HTML format
+ * @param markdownContent The Markdown content to convert
+ * @returns The converted HTML content
+ */
+export function markdownToHtml(markdownContent: string): string {
+  if (!markdownContent) return '';
+  
+  let html = markdownContent;
+  
+  // Convert headers
+  html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+  html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^##### (.*?)$/gm, '<h5>$1</h5>');
+  html = html.replace(/^###### (.*?)$/gm, '<h6>$1</h6>');
+  
+  // Convert bold and italic
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  // Convert inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  
+  // Convert code blocks
+  html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+  
+  // Convert links
+  html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+  
+  // Convert images
+  html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">');
+  
+  // Convert unordered lists
+  html = html.replace(/^- (.*?)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*?<\/li>\n)+/g, '<ul>$&</ul>');
+  
+  // Convert ordered lists - this is a bit more complex
+  let index = 1;
+  html = html.replace(/^\d+\. (.*?)$/gm, (match, p1) => {
+    return `<li>${p1}</li>`;
+  });
+  html = html.replace(/(<li>.*?<\/li>\n)+/g, (match) => {
+    // Check if this is already wrapped in <ul> tags (we processed it above)
+    if (match.includes('<ul>')) return match;
+    return `<ol>${match}</ol>`;
+  });
+  
+  // Convert blockquotes
+  html = html.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
+  
+  // Convert horizontal rules
+  html = html.replace(/^---$/gm, '<hr>');
+  
+  // Convert paragraphs (any line that's not processed yet)
+  html = html.replace(/^([^<].*?)$/gm, (match, p1) => {
+    // Ignore empty lines
+    if (p1.trim() === '') return p1;
+    // Avoid wrapping already processed elements
+    if (p1.startsWith('<')) return p1;
+    return `<p>${p1}</p>`;
+  });
+  
+  // Clean up: replace multiple consecutive newlines with a single one
+  html = html.replace(/\n\s*\n/g, '\n');
+  
+  return html;
+}
+
+/**
  * Copies text to the clipboard
  * @param text The text to copy
  * @returns Promise that resolves to true if successful, false otherwise
@@ -123,6 +193,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 
 const formatUtils = {
   htmlToMarkdown,
+  markdownToHtml,
   copyToClipboard,
 };
 
