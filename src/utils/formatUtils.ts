@@ -119,6 +119,56 @@ export function markdownToHtml(markdownContent: string): string {
   // Convert images
   html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">');
   
+  // Convert tables (Markdown tables format)
+  // First, we need to detect table blocks
+  const tableRegex = /^\|(.+)\|\r?\n\|(?:[-:]+\|)+\r?\n(\|.+\|\r?\n)+/gm;
+  
+  html = html.replace(tableRegex, (tableBlock) => {
+    const rows = tableBlock.trim().split('\n');
+    const headerRow = rows[0];
+    const alignmentRow = rows[1];
+    const bodyRows = rows.slice(2);
+    
+    // Process header cells
+    const headerCells = headerRow
+      .split('|')
+      .filter(cell => cell.trim() !== '')
+      .map(cell => `<th>${cell.trim()}</th>`)
+      .join('');
+    
+    // Get alignment information
+    const alignments = alignmentRow
+      .split('|')
+      .filter(cell => cell.trim() !== '')
+      .map(cell => {
+        const trimmed = cell.trim();
+        if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
+        if (trimmed.endsWith(':')) return 'right';
+        return 'left';
+      });
+    
+    // Process body rows
+    const bodyHtml = bodyRows
+      .map(row => {
+        const cells = row
+          .split('|')
+          .filter(cell => cell.trim() !== '')
+          .map((cell, i) => `<td style="text-align: ${alignments[i] || 'left'}">${cell.trim()}</td>`)
+          .join('');
+        return `<tr>${cells}</tr>`;
+      })
+      .join('');
+    
+    return `<table class="border-collapse w-full">
+      <thead>
+        <tr>${headerCells}</tr>
+      </thead>
+      <tbody>
+        ${bodyHtml}
+      </tbody>
+    </table>`;
+  });
+  
   // Convert unordered lists
   html = html.replace(/^- (.*?)$/gm, '<li>$1</li>');
   html = html.replace(/(<li>.*?<\/li>\n)+/g, '<ul>$&</ul>');

@@ -142,7 +142,13 @@ const Dashboard = ({ blogs, onEdit, onDelete, onView }: DashboardProps) => {
                 {filteredBlogs.map((blog) => (
                   <tr key={blog.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{blog.blogTopic}</div>
+                      <div 
+                        className="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                        onClick={() => onView(blog)}
+                        title="Click to view this post"
+                      >
+                        {blog.blogTopic}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500 dark:text-gray-400">{blog.targetKeyword}</div>

@@ -109,8 +109,11 @@ const BlogPreview = ({ blog, blogs, onSave, onDelete, onSelect, isEditing: initi
     
     if (viewMode === 'raw-md') {
       textToCopy = markdownContent;
-    } else {
+    } else if (viewMode === 'raw-html') {
       textToCopy = blog.content;
+    } else {
+      // If in formatted view, copy the properly formatted HTML
+      textToCopy = htmlContent;
     }
     
     const success = await copyToClipboard(textToCopy);
