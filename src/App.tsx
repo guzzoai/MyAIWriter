@@ -5,8 +5,9 @@ import Dashboard from './components/Dashboard'
 import Header from './components/Header'
 import InstructionsPanel from './components/InstructionsPanel'
 import { Blog } from './types'
+import { saveBlog, getAllBlogs, deleteBlog as dbDeleteBlog, updateBlog } from './db'
 
-type ViewType = 'dashboard' | 'generate' | 'view';
+type ViewType = 'dashboard' | 'generate' | 'view' | 'edit';
 
 function App() {
   const [blogs, setBlogs] = useState<Blog[]>([])
@@ -14,22 +15,19 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [currentView, setCurrentView] = useState<ViewType>('dashboard')
 
-  // Load saved blogs from localStorage on initial load
+  // Load saved blogs from database on initial load
   useEffect(() => {
-    const savedBlogs = localStorage.getItem('blogs');
-    if (savedBlogs) {
+    const loadBlogs = async () => {
       try {
-        setBlogs(JSON.parse(savedBlogs));
+        const savedBlogs = await getAllBlogs();
+        setBlogs(savedBlogs);
       } catch (error) {
         console.error('Error loading saved blogs:', error);
       }
-    }
+    };
+    
+    loadBlogs();
   }, []);
-
-  // Save blogs to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('blogs', JSON.stringify(blogs));
-  }, [blogs]);
 
   const handleGenerateBlog = async (formData: Omit<Blog, 'id' | 'content' | 'createdAt'>) => {
     setIsLoading(true)
@@ -70,12 +68,16 @@ Follow a structure with an engaging intro, well-structured body with subheadings
       const generatedContent = data.choices[0].message.content
 
       const newBlog = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         content: generatedContent,
         createdAt: Date.now(),
         ...formData
       }
 
+      // Save to database
+      await saveBlog(newBlog);
+      
+      // Update state
       setBlogs([...blogs, newBlog])
       setCurrentBlog(newBlog)
       setCurrentView('view')
@@ -87,16 +89,35 @@ Follow a structure with an engaging intro, well-structured body with subheadings
     }
   }
 
-  const handleSaveBlog = (updatedBlog: Blog) => {
-    setBlogs(blogs.map(blog => blog.id === updatedBlog.id ? updatedBlog : blog))
-    setCurrentBlog(updatedBlog)
+  const handleSaveBlog = async (updatedBlog: Blog) => {
+    try {
+      // Update in database
+      await updateBlog(updatedBlog);
+      
+      // Update state
+      setBlogs(blogs.map(blog => blog.id === updatedBlog.id ? updatedBlog : blog))
+      setCurrentBlog(updatedBlog)
+      setCurrentView('view') // Return to view mode after saving
+    } catch (error) {
+      console.error('Error saving blog:', error);
+      alert('Failed to save changes. Please try again.');
+    }
   }
 
-  const handleDeleteBlog = (id: string) => {
-    setBlogs(blogs.filter(blog => blog.id !== id))
-    if (currentBlog?.id === id) {
-      setCurrentBlog(null)
-      setCurrentView('dashboard')
+  const handleDeleteBlog = async (id: string) => {
+    try {
+      // Delete from database
+      await dbDeleteBlog(id);
+      
+      // Update state
+      setBlogs(blogs.filter(blog => blog.id !== id))
+      if (currentBlog?.id === id) {
+        setCurrentBlog(null)
+        setCurrentView('dashboard')
+      }
+    } catch (error) {
+      console.error('Error deleting blog:', error);
+      alert('Failed to delete blog. Please try again.');
     }
   }
 
@@ -112,8 +133,7 @@ Follow a structure with an engaging intro, well-structured body with subheadings
 
   const handleEditBlog = (blog: Blog) => {
     setCurrentBlog(blog)
-    setCurrentView('view')
-    // The BlogPreview component will handle the actual editing
+    setCurrentView('edit') // Changed to 'edit' instead of 'view'
   }
 
   const renderNavigation = () => (
@@ -146,6 +166,13 @@ Follow a structure with an engaging intro, well-structured body with subheadings
             Viewing Post
           </button>
         )}
+        {currentBlog && currentView === 'edit' && (
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-md dark:bg-blue-700"
+          >
+            Editing Post
+          </button>
+        )}
       </div>
     </div>
   )
@@ -176,6 +203,18 @@ Follow a structure with an engaging intro, well-structured body with subheadings
             onSave={handleSaveBlog}
             onDelete={handleDeleteBlog}
             onSelect={handleViewBlog}
+            isEditing={false}
+          />
+        )
+      case 'edit':
+        return (
+          <BlogPreview
+            blog={currentBlog}
+            blogs={blogs}
+            onSave={handleSaveBlog}
+            onDelete={handleDeleteBlog}
+            onSelect={handleViewBlog}
+            isEditing={true}
           />
         )
       default:

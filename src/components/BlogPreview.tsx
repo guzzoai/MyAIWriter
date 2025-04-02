@@ -12,25 +12,34 @@ interface BlogPreviewProps {
   onSave: (blog: Blog) => void;
   onDelete: (id: string) => void;
   onSelect: (blog: Blog) => void;
+  isEditing?: boolean;
 }
 
 type ViewMode = 'formatted' | 'raw-html' | 'raw-md';
 
-const BlogPreview = ({ blog, blogs, onSave, onDelete, onSelect }: BlogPreviewProps) => {
+const BlogPreview = ({ blog, blogs, onSave, onDelete, onSelect, isEditing: initialEditing = false }: BlogPreviewProps) => {
   const [editContent, setEditContent] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialEditing);
   const [viewMode, setViewMode] = useState<ViewMode>('formatted');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showPrintView, setShowPrintView] = useState(false);
   const [markdownContent, setMarkdownContent] = useState('');
   const [copySuccess, setCopySuccess] = useState('');
   
-  // Check if dark mode is enabled
+  useEffect(() => {
+    setIsEditing(initialEditing);
+  }, [initialEditing]);
+  
+  useEffect(() => {
+    if (blog && (isEditing || initialEditing)) {
+      setEditContent(blog.content);
+    }
+  }, [blog, isEditing, initialEditing]);
+  
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
     setIsDarkMode(isDark);
     
-    // Add listener for dark mode changes
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'class') {
@@ -44,7 +53,6 @@ const BlogPreview = ({ blog, blogs, onSave, onDelete, onSelect }: BlogPreviewPro
     return () => observer.disconnect();
   }, []);
   
-  // Convert HTML to Markdown when blog changes or mode changes to markdown
   useEffect(() => {
     if (blog && (viewMode === 'raw-md' || viewMode === 'formatted')) {
       setMarkdownContent(htmlToMarkdown(blog.content));
@@ -70,7 +78,6 @@ const BlogPreview = ({ blog, blogs, onSave, onDelete, onSelect }: BlogPreviewPro
   };
 
   const toggleViewMode = () => {
-    // Cycle through view modes: formatted -> raw-html -> raw-md -> formatted
     if (viewMode === 'formatted') {
       setViewMode('raw-html');
     } else if (viewMode === 'raw-html') {
@@ -207,7 +214,8 @@ const BlogPreview = ({ blog, blogs, onSave, onDelete, onSelect }: BlogPreviewPro
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full h-96 p-4 border border-gray-300 dark:border-gray-600 rounded resize-none flex-1 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-mono"
+                className="w-full min-h-[500px] p-4 border border-gray-300 dark:border-gray-600 rounded resize-vertical flex-1 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-mono"
+                autoFocus
               />
               <div className="flex justify-end space-x-2 mt-4">
                 <button

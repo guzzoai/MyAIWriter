@@ -19,7 +19,7 @@ const Dashboard = ({ blogs, onEdit, onDelete, onView }: DashboardProps) => {
 
   // Calculate some stats
   const totalPosts = blogs.length;
-  const totalWords = blogs.reduce((sum, blog) => sum + blog.wordCount, 0);
+  const totalWords = blogs.reduce((sum, blog) => sum + Number(blog.wordCount), 0);
   const averageWordsPerPost = totalPosts > 0 ? Math.round(totalWords / totalPosts) : 0;
   
   // Get the most used article type and tone
@@ -46,12 +46,12 @@ const Dashboard = ({ blogs, onEdit, onDelete, onView }: DashboardProps) => {
         </div>
         
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-          <div className="text-3xl font-bold text-green-600 dark:text-green-400">{totalWords}</div>
+          <div className="text-3xl font-bold text-green-600 dark:text-green-400">{totalWords.toLocaleString()}</div>
           <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Words</div>
         </div>
         
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-          <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{averageWordsPerPost}</div>
+          <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{averageWordsPerPost.toLocaleString()}</div>
           <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Words/Post</div>
         </div>
         
